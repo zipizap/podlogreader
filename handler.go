@@ -13,18 +13,18 @@ type Handler interface {
 	ObjectUpdated(objOld, objNew interface{})
 }
 
-// TestHandler is a sample implementation of Handler
-type TestHandler struct{}
+// TheHandler is a sample implementation of Handler
+type TheHandler struct{}
 
 // Init handles any handler initialization
-func (t *TestHandler) Init() error {
-	log.Info("TestHandler.Init")
+func (t *TheHandler) Init() error {
+	log.Info("TheHandler.Init")
 	return nil
 }
 
 // ObjectCreated is called when an object is created
-func (t *TestHandler) ObjectCreated(obj interface{}) {
-	log.Info("TestHandler.ObjectCreated")
+func (t *TheHandler) ObjectCreated(obj interface{}) {
+	log.Info("TheHandler.ObjectCreated")
 	// assert the type to a Pod object to pull out relevant data
 	pod := obj.(*core_v1.Pod)
 	log.Infof("    ResourceVersion: %s", pod.ObjectMeta.ResourceVersion)
@@ -33,11 +33,11 @@ func (t *TestHandler) ObjectCreated(obj interface{}) {
 }
 
 // ObjectDeleted is called when an object is deleted
-func (t *TestHandler) ObjectDeleted(obj interface{}) {
-	log.Info("TestHandler.ObjectDeleted")
+func (t *TheHandler) ObjectDeleted(obj interface{}) {
+	log.Info("TheHandler.ObjectDeleted")
 }
 
 // ObjectUpdated is called when an object is updated
-func (t *TestHandler) ObjectUpdated(objOld, objNew interface{}) {
-	log.Info("TestHandler.ObjectUpdated")
+func (t *TheHandler) ObjectUpdated(objOld, objNew interface{}) {
+	log.Info("TheHandler.ObjectUpdated")
 }
