@@ -1,27 +1,31 @@
 # podlogreader
 
-A k8s-controller that makes possible for a serviceaccount to **read logs of a specific deployment-pods** (and no other deployments or pods)
+A k8s-controller that makes possible for a serviceaccount to **read logs from specific deployment-pods** (and no other deployments or pods)
 For a deployment to use it, it should add the label `podlogreader-affiliate: enable` in its pods-spec.
-It just keeps updating a role, with "resoureNames:" containing that specific deployment-pods names
+It will create in the namespace a serviceaccount, rolebinding and role with minimal permitions to read the logs of only those pods of that deployment. It will then keep always in-sync that role with any deployment-pods changes.
+
+So the overall effect is to have a serviceaccount, for that deployment, that can read deployment-pods logs (and only those of the deployment, no other!), and which is resilient to deployment pod changes (replicas increased/decresed, pods deleted/created, etc...)  
 
 
-This was a successfull intent to try and see if this idea was even possible to do :)
-The code is very simple, and all runs in an independent process without interference with any internal kubernetes control-loops or other controllers (ie, its uncomplicate and looks safe :) ) 
+In all honesty, this was a successfull intent to try and see if this whole idea was even possible to be accomplished :)
+
+The code is very simple, and all runs in an independent process without interference with the internal kubernetes control-loops or other controllers (ie, its uncomplicated and looks safe for the overall cluster operation :) ) 
 
 
 ## It sounds magic... How can this work?
 
-In essence this is a custom-controller, that efficiently reacts on the creation/update of pods-of-a-deployment with label "podlogreader-affiliate: enable", and creates a serviceaccount with minimal role permitions to only read *that* deployment-pods/log. It then keeps updating the role to allow reading access of the logs of the deployment-pods, as they are appended, deleted, changed... 
+In essence this is a "kubernetes custom-controller", that efficiently reacts on events of creation/update of pods-of-a-deployment, which contain the label "podlogreader-affiliate: enable", and creates a serviceaccount with minimal role permitions to only read *that* deployment-pods/log. It then keeps updating the role to allow reading access to the logs of the deployment-pods, as they are appended, deleted, changed... 
 
-Was implemented from a good-looking controller-example, which uses the SharedInformer/Queue pattern (recommended as the right way to do custom-controllers for optimal caching of events)
+Was implemented from a good-looking controller-example, which uses the SharedInformer/Queue pattern (recommended as an efficient way to build custom-controllers for optimal caching of object changes)
 
 Works by monitoring events of pods CREATE/UPDATE'ing in all namespaces, and checking if a pod contains the label "podlogreader-affiliate: enable", in which case:
+
   - Discovers the *deployment* owner of that pod (if exists) (ex: nginxdeploy)
 
   - Discovers the *name-of-all-pods-of-that-deployment* (ex: nginxdeploy-xxx-yy1, nginxdeploy-xxx-yy2, ..., nginxdeploy-xxx-yyn)
 
   - Creates-or-updates a *role* (ex: podlogreader-nginxdeploy) to read logs of only those deployment-pods (minimum permitions)
-    It updates the role field `resouceNames:` with the *name-of-all-pods-of-that-deployment*, andd always keepis updating it on any pod-changes
+    It updates the role field `resouceNames:` with the *name-of-all-pods-of-that-deployment*, and keeps updating them on any pod-changes detected
     Ex:
     ```
     apiVersion: rbac.authorization.k8s.io/v1
@@ -71,9 +75,11 @@ Works by monitoring events of pods CREATE/UPDATE'ing in all namespaces, and chec
     ```
 
 
-The controller runs in its process, typically in a pod, and keeps a conection to the api-server watching for events, and when an event-of-interest happens it reacts by making additional calls to the api to create/update necesary cluster resources. So if anything unexpected happens in the controller - like a bug - the controller process will just crash and never delay of affect the internal kubernetes-loop or other controller's loops.
+The controller runs in its separate process, typically in a pod, that keeps a live-connection to the kubernetes api-server to be fed back events when a pod is create/updated/deleted (via SharedInformer for efficient caching). When an event-of-interest happens, the custom-controller reacts by making additional calls to the api-server to create/update other intended cluster resources. 
+Even though I did not detected any misbehaviour of the controller, it was mad if someday something unexpected happens in the controller - like a bug - the controller process will just crash on its own process, and not affect the cluster operations - as it never delays or affects internal kubernetes-loops, or the processing of new resources, or any other existing controller's loops. 
 
-The code is very simple - the essence is in the handler.go functions
+The code is very simple - the essence is in the handler.go functions, the hard-part was understanding how to use the informer and queues and the client-go libraries... 
+It helped a lot some conference presentations and the "programming kubernetes" ebook - see [Great talks and links] section further bellow - as well as building from a good example that already included much of the more complex function-wiring done.
 
 
 
