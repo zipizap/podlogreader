@@ -12,7 +12,7 @@ In all honesty, this was a successfull intent to try and see if this whole idea 
 The code is very simple, and all runs in an independent process without interference with the internal kubernetes control-loops or other controllers (ie, its uncomplicated and looks safe for the overall cluster operation :) ) 
 
 
-## It sounds magic... How can this work?
+## It sounds like magec... How can this work?
 
 In essence this is a "kubernetes custom-controller", that efficiently reacts on events of creation/update of pods-of-a-deployment, which contain the label "podlogreader-affiliate: enable", and creates a serviceaccount with minimal role permitions to only read *that* deployment-pods/log. It then keeps updating the role to allow reading access to the logs of the deployment-pods, as they are appended, deleted, changed... 
 
@@ -25,7 +25,7 @@ Works by monitoring events of pods CREATE/UPDATE'ing in all namespaces, and chec
   - Discovers the *name-of-all-pods-of-that-deployment* (ex: nginxdeploy-xxx-yy1, nginxdeploy-xxx-yy2, ..., nginxdeploy-xxx-yyn)
 
   - Creates-or-updates a *role* (ex: podlogreader-nginxdeploy) to read logs of only those deployment-pods (minimum permitions)
-    It updates the role field `resouceNames:` with the *name-of-all-pods-of-that-deployment*, and keeps updating them on any pod-changes detected
+    It updates the role field `resourceNames:` with the *name-of-all-pods-of-that-deployment*, and keeps updating them on any pod-changes detected
     Ex:
     ```
     apiVersion: rbac.authorization.k8s.io/v1
