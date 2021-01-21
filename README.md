@@ -144,3 +144,10 @@ Make REST-API calls with kubectl, to let it take care of the authentication:
 kubectl --raw /apis/batch/v1
 ``` 
 
+
+
+## TODO
+
+  - create `docker_build_and_push.sh` to create a Dockefile and an image from the binary
+  - create **helm-chart** to deploy the controller into a cluster as a _deployment_ (only 1 replica), with a _serviceaccount_ rolebind'ed with cluster-admin (or a more restricted role, if I have the time to reduce-and-test the minimal-permissions)
+  - document how to deploy the helm-chart, with a **demo**   
