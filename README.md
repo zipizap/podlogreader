@@ -12,6 +12,25 @@ In all honesty, this was a successfull intent to try and see if this whole idea 
 The code is very simple, and all runs in an independent process without interference with the internal kubernetes control-loops or other controllers (ie, its uncomplicated and looks safe for the overall cluster operation :) ) 
 
 
+
+
+
+## Run locally (off-cluster, not in pod) for quick local testing
+```
+go get -u github.com/golang/dep/cmd/dep
+go install github.com/golang/dep/cmd/dep
+dep ensure
+./go_run.sh
+  # It will read existing ~/.kube/config file and connect to current context (cluster/user), which should have cluster-admin permitions to monitor pod-changes in all namespaces and create roles in any namespace
+  # 
+  # Stop it at anytime with CTRL-C
+  #
+```
+
+
+
+
+
 ## It sounds like magec... How can this work?
 
 In essence this is a "kubernetes custom-controller", that efficiently reacts on events of creation/update of pods-of-a-deployment, which contain the label "podlogreader-affiliate: enable", and creates a serviceaccount with minimal role permitions to only read *that* deployment-pods/log. It then keeps updating the role to allow reading access to the logs of the deployment-pods, as they are appended, deleted, changed... 
@@ -84,14 +103,6 @@ It helped a lot some conference presentations and the "programming kubernetes" e
 
 
 
-## Install
-```
-go get -u github.com/golang/dep/cmd/dep
-go install github.com/golang/dep/cmd/dep
-dep ensure
-```
-
-
 
 ## Great talks and links
 
@@ -115,6 +126,7 @@ Also, another big thanks to the youtube conference videos (search "kubernetes cu
 The book "Programming Kubernetes" was also very helpfull with its clear explanations of the so-many pieces that are juggled around to make a "custom controller" 
 
 This relevant discussion about how a role can manage permitions of pods/log, per namespace or per pod-name, but not per deployment-name https://github.com/kubernetes/kubernetes/issues/56582
+
 
 
 

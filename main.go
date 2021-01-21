@@ -112,7 +112,9 @@ func main() {
 		clientset: client,
 		informer:  informer,
 		queue:     queue,
-		handler:   &TheHandler{},
+		handler: &TheHandler{
+			client: client,
+		},
 	}
 
 	// use a channel to synchronize the finalization for a graceful shutdown
