@@ -47,6 +47,7 @@ Works by monitoring events of pods CREATE/UPDATE'ing in all namespaces, and chec
 
   - Creates-or-updates a *role* (ex: podlogreader-nginxdeploy) to read logs of only those deployment-pods (minimum permitions)
     It updates the role field `resourceNames:` with the *name-of-all-pods-of-that-deployment*, and keeps updating them on any pod-changes detected
+
     Ex:
     ```
     apiVersion: rbac.authorization.k8s.io/v1
@@ -66,7 +67,8 @@ Works by monitoring events of pods CREATE/UPDATE'ing in all namespaces, and chec
     ```
 
   - Creates a *serviceaccount* (ex: podlogreader-nginxdeploy). 
-    If serviceaccount already exists, its left unchanged    
+    If serviceaccount already exists, its left unchanged   
+
     Ex:
     ```
     apiVersion: v1
@@ -78,6 +80,7 @@ Works by monitoring events of pods CREATE/UPDATE'ing in all namespaces, and chec
 
   - Creates a *rolebinding* (ex: podlogreader-nginxdeploy) to bind the role with the serviceaccount. 
     If rolebinding already exists, its left unchanged    
+    
     Ex:
     ```
     apiVersion: rbac.authorization.k8s.io/v1
