@@ -33,7 +33,7 @@ dep ensure
 
 
 
-## It sounds like magec... How can this work?
+## It sounds like magic... How can this work?
 
 In essence this is a "kubernetes custom-controller", that efficiently reacts on events of creation/update of pods-of-a-deployment, which contain the label "podlogreader-affiliate: enable", and creates a serviceaccount with minimal role permitions to only read *that* deployment-pods/log. It then keeps updating the role to allow reading access to the logs of the deployment-pods, as they are appended, deleted, changed... 
 
