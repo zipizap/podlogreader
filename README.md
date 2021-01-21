@@ -1,7 +1,9 @@
 # podlogreader
 
 A k8s-controller that makes possible for a serviceaccount to **read logs from specific deployment-pods** (and no other deployments or pods)
+
 For a deployment to use it, it should add the label `podlogreader-affiliate: enable` in its pods-spec.
+
 It will create in the namespace a serviceaccount, rolebinding and role with minimal permitions to read the logs of only those pods of that deployment. It will then keep always in-sync that role with any deployment-pods changes.
 
 So the overall effect is to have a serviceaccount, for that deployment, that can read deployment-pods logs (and only those of the deployment, no other!), and which is resilient to deployment pod changes (replicas increased/decresed, pods deleted/created, etc...)  
@@ -95,10 +97,10 @@ Works by monitoring events of pods CREATE/UPDATE'ing in all namespaces, and chec
 
 
 The controller runs in its separate process, typically in a pod, that keeps a live-connection to the kubernetes api-server to be fed back events when a pod is create/updated/deleted (via SharedInformer for efficient caching). When an event-of-interest happens, the custom-controller reacts by making additional calls to the api-server to create/update other intended cluster resources. 
-Even though I did not detected any misbehaviour of the controller, it was mad if someday something unexpected happens in the controller - like a bug - the controller process will just crash on its own process, and not affect the cluster operations - as it never delays or affects internal kubernetes-loops, or the processing of new resources, or any other existing controller's loops. 
+Even though I did not detected any misbehaviour of the controller, it was made with care so that if someday something unexpected happens in the controller - like a bug - the controller will just crash on its own process, and not affect the cluster operations - as it never delays or affects internal kubernetes-loops, or the processing of new resources, or any other existing controller's loops. 
 
 The code is very simple - the essence is in the handler.go functions, the hard-part was understanding how to use the informer and queues and the client-go libraries... 
-It helped a lot some conference presentations and the "programming kubernetes" ebook - see [Great talks and links] section further bellow - as well as building from a good example that already included much of the more complex function-wiring done.
+It helped a lot some conference presentations and the "programming kubernetes" ebook - see [Great talks and links] section further bellow - as well as building from a good example that already included much of the more complex function-wiring in place.
 
 
 
@@ -106,10 +108,10 @@ It helped a lot some conference presentations and the "programming kubernetes" e
 
 ## Great talks and links
 
-This is all forked from https://github.com/trstringer/k8s-controller-core-resource and its great blog-post explanations https://trstringer.com/extending-k8s-custom-controllers/ :)
+This controller is derived from https://github.com/trstringer/k8s-controller-core-resource and its great blog-post explanations https://trstringer.com/extending-k8s-custom-controllers/ :)
 
 
-It was much more lengthy to achieve than I expected... had to read and see lots of videos, around:
+It was much more lengthy to achieve than I expected... had to read and see lots of videos:
  - Admission controller, mutating webhooks: these did not seem a good fit for this, and they can interfere with internal control-loop of kubernetes - yaikes! 
  - custom controller: what this is in fact
  - client-go (official kubernetes client library in go)
