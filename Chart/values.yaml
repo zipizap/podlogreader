@@ -5,8 +5,16 @@
 image:
   repository: zipizap/podlogreader-controller
   pullPolicy: IfNotPresent
-  # Overrides the image tag whose default is the chart appVersion.
+  ## Overrides the image tag whose default is the chart appVersion.
   #tag: ""
+
+## Arguments:
+##   Without any argument, will only create/update the *role*
+##
+##   With argument `--create-sa-and-rolebinding` will create/update the *role*, 
+##   and also create *serviceaccount* and *rolebinding* (if any of the 2 exist, its left unchanged)
+#args: []
+args: [ "--create-sa-and-rolebinding" ]
 
 imagePullSecrets: []
 

@@ -37,33 +37,32 @@ func (t *TheHandler) Init() error {
 	return nil
 }
 
-// ObjectCreated is called when an object is created
+// ObjectCreated is called when an object is created or updated (see controller.go LOC116)
 func (t *TheHandler) ObjectCreated(obj interface{}) {
 	log.Info("TheHandler.ObjectCreated")
 	// assert the type to a Pod object to pull out relevant data
 	pod := obj.(*core_v1.Pod)
 	t.processPod(pod)
-
-	// log.Infof("    ResourceVersion: %s", pod.ObjectMeta.ResourceVersion)
-	// log.Infof("    NodeName: %s", pod.Spec.NodeName)
-	// log.Infof("    Phase: %s", pod.Status.Phase)
+	return
 }
 
 // ObjectDeleted is called when an object is deleted
 func (t *TheHandler) ObjectDeleted(obj interface{}) {
-	log.Info("TheHandler.ObjectDeleted")
-	// assert the type to a Pod object to pull out relevant data
-	pod := obj.(*core_v1.Pod)
-	t.processPod(pod)
+	//log.Info("TheHandler.ObjectDeleted")
+
+	// On a deleted pod, we dont do anything, simply return
+	return
 }
 
-// ObjectUpdated is called when an object is updated
+// ObjectUpdated should be called when an object is updated, but instead ObjectCreated is called in its place
+// This limitation comes from controller.go LOC116
+// For this controller, it does not matter - the same processing is desired when a pod is created or updated
 func (t *TheHandler) ObjectUpdated(objOld, objNew interface{}) {
-	log.Info("TheHandler.ObjectUpdated")
+	//log.Info("TheHandler.ObjectUpdated")
 	// assert the type to a Pod object to pull out relevant data
-	pod := objNew.(*core_v1.Pod)
-	t.processPod(pod)
-
+	//pod := objNew.(*core_v1.Pod)
+	//t.processPod(pod)
+	return
 }
 
 func (t *TheHandler) pp(i interface{}) string {

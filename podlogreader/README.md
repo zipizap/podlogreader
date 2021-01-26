@@ -6,7 +6,7 @@ For a deployment to use it, it should add the label `podlogreader-affiliate: ena
 
 It will create in the namespace a serviceaccount, rolebinding and role with minimal permitions to read the logs of only those pods of that deployment. It will then keep always in-sync that role with any deployment-pods changes.
 
-So the overall effect is to have a serviceaccount, for that deployment, that can read deployment-pods logs (and only those of the deployment, no other!), and which is resilient to deployment pod changes (replicas increased/decresed, pods deleted/created, etc...)  
+So the overall effect is to have a serviceaccount, for that deployment, that can read deployment-pods logs (and only those of the deployment, no other!), and which is resilient to deployment pod changes (replicas increased/decresed, pods created, etc...)  
 
 
 In all honesty, this was a successfull intent to try and see if this whole idea was even possible to be accomplished :)
@@ -29,10 +29,10 @@ kubectl -n podlogreader-controller logs podlogreader-controller
 
 In a deployment (ex: mydeployment) add the label `podlogreader-affiliate: enable` into its **.spec.template.metadata.labels**. This can be done in a new deployment or in an existing deployment in which case its pods will be restarted (because theirs podSpec changed which triggers recreatino of pods)
 
-The controller will detect the label, and create/update (in same namespace) a role `podlogreader-mydeployment` containing minimum permitions to allow reading the logs of that deployment-pods. If the controller was deployed with argument "--create-sa-and-rolebinding", it will also create a serviceaccount and rolebinding with the role created. 
+TODO: add deployment-with-label example
 
+The controller will detect the label, and create/update (in same namespace) a role `podlogreader-mydeployment` containing minimum permitions to allow reading the logs of that deployment-pods. If the controller was deployed with argument "--create-sa-and-rolebinding", it will also create a serviceaccount and rolebinding for the role created. 
 
-The deployment
 
 
 ## Uninstall podlogreader-controller
@@ -44,7 +44,7 @@ TODO
 
 ## It sounds like magic... How can this work?
 
-In essence this is a "kubernetes custom-controller", that efficiently reacts on events of creation/update of pods-of-a-deployment, which contain the label "podlogreader-affiliate: enable", and creates a serviceaccount with minimal role permitions to only read *that* deployment-pods/log. It then keeps updating the role to allow reading access to the logs of the deployment-pods, as they are appended, deleted, changed... 
+In essence this is a "kubernetes custom-controller", that efficiently reacts on events of creation/update of pods-of-a-deployment, which contain the label "podlogreader-affiliate: enable", and creates a serviceaccount with minimal role permitions to only read *that* deployment-pods/log. It then keeps updating the role to allow reading access to the logs of the deployment-pods, as they are increased, modified... 
 
 Was implemented from a good-looking controller-example, which uses the SharedInformer/Queue pattern (recommended as an efficient way to build custom-controllers for optimal caching of object changes)
 
@@ -117,7 +117,7 @@ Works by monitoring events of pods CREATE/UPDATE'ing in all namespaces, and chec
   
   
 
-The controller runs in its separate process, (typically in a pod, but could also be an off-cluster process during development), that keeps a live-connection to the kubernetes api-server to be fed back events when a pod is create/updated/deleted (via SharedInformer for efficient caching). When an event-of-interest happens, the custom-controller reacts in handler-functions which can make additional calls to the api-server to create/update other intended cluster resources. 
+The controller runs in its separate process, (typically in a pod, but could also be an off-cluster process during development), that keeps a live-connection to the kubernetes api-server to be fed back events when a pod is create/updated (via SharedInformer for efficient caching). When an event-of-interest happens, the custom-controller reacts in handler-functions which can make additional calls to the api-server to create/update other intended cluster resources. 
 
 Even though I did not detected any misbehaviour of the controller, it was made with care so that if someday an unexpected bug happens in the controller, it will just crash on its own process, and not affect any other cluster operations. Ie, it never delays or affects internal kubernetes-loops, or the processing of new resources, or any other existing controller's loops, as it works independently aislated from them all. This is an intended safeguard (ex: an admission mutating webhooks can introduce delay into internal-loops, but not a custom-controller like this one)   
 
@@ -175,7 +175,7 @@ dep ensure
 ```
 
 
-### To compile and build a docker image, do:
+### To compile and build your own docker image, do:
 ```
 # Edit compileBinary_buildAndPushDockerImage.sh 
 #   - DOCKER_USERNAME and DOCKER_IMGwTAG around LOC45

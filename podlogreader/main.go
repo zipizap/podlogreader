@@ -11,26 +11,60 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/workqueue"
 )
 
+// fileExists checks if a file exists and is not a directory before we
+// try using it to prevent further errors.
+func fileExists(filename string) bool {
+	info, err := os.Stat(filename)
+	if os.IsNotExist(err) {
+		return false
+	}
+	return !info.IsDir()
+}
+
 // retrieve the Kubernetes cluster client from outside of the cluster
 func getKubernetesClient() kubernetes.Interface {
 	// construct the path to resolve to `~/.kube/config`
 	kubeConfigPath := os.Getenv("HOME") + "/.kube/config"
+	var rConfig *rest.Config
 
-	// create the config from the path
-	config, err := clientcmd.BuildConfigFromFlags("", kubeConfigPath)
-	if err != nil {
-		log.Fatalf("getClusterConfig: %v", err)
+	if exists := fileExists(kubeConfigPath); exists {
+		// ~/.kube/config file exists, lets use it
+		// create the config from kubeConfigPath
+		config, err := clientcmd.BuildConfigFromFlags("", kubeConfigPath)
+		if err != nil {
+			log.Fatalf("getKubernetesClient with kubeConfigPath: %v", err)
+		}
+		rConfig = config
+		log.Info("Found kubeconfig file: ~/.kube/config (we are probably running off-cluster)")
+
+	} else if fileExists("/var/run/secrets/kubernetes.io/serviceaccount/token") {
+		// we are running in-cluster, inside a pod with a serviceaccount, lets use it
+		// Refs:
+		//   - https://kubernetes.io/docs/tasks/access-application-cluster/access-cluster/#accessing-the-api-from-a-pod
+		//   - https://github.com/kubernetes/client-go/blob/master/examples/in-cluster-client-configuration/main.go
+
+		// creates the in-cluster config
+		config, err := rest.InClusterConfig()
+		if err != nil {
+			log.Fatalf("getKubernetesClient with serviceaccount: %v", err)
+		}
+		rConfig = config
+		log.Info("Found serviceaccount token file (we are certainly running in-cluster)")
+
+	} else {
+		log.Fatalf("getKubernetesClient: cannot find neither ~/.kube/config nor serviceaccount - aborting")
 	}
 
 	// generate the client based off of the config
-	client, err := kubernetes.NewForConfig(config)
+	client, err := kubernetes.NewForConfig(rConfig)
 	if err != nil {
-		log.Fatalf("getClusterConfig: %v", err)
+		log.Fatalf("ggetClusterConfig: %v", err)
 	}
 
 	log.Info("Successfully constructed k8s client")
@@ -44,6 +78,7 @@ func main() {
 	// command-line arguments
 	for _, n := range os.Args[1:] {
 		if n == "--create-sa-and-rolebinding" {
+			log.Info("Arg detected: --create-sa-and-rolebinding")
 			Arg_CreateSaAnRolebinding = true
 		}
 	}
